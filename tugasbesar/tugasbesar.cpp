@@ -59,7 +59,8 @@ GLfloat qaFullAmbient[] = {1.0, 1.0, 1.0, 1.0};
 
 void init(void)
 {
-	glClearColor(0.30, 0.30, 0.30, 0.50);
+	//glClearColor(0.30, 0.30, 0.30, 0.50);
+	glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-1.0, 1.0, -1.0, 1.0, -3.0, 3.0);
