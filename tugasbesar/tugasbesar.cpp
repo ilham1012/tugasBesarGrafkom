@@ -1,10 +1,4 @@
-//
-//  main.cpp
-//  TugasBesar_SeoulTower
-//
-//  Created by Muhammad Ilham on 6/4/12.
-//  Copyright (c) 2012 UNIKOM. All rights reserved.
-//
+
 #include <windows.h>
 #include <GL\glut.h>
 #include <iostream>
