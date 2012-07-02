@@ -11,17 +11,22 @@
 #endif
 
 static GLUquadricObj *quadObj = gluNewQuadric();
-GLdouble eyeX = 0.0, eyeY = 0.0, eyeZ = 5.0, centerX = 0.0, centerY = 0.0, centerZ = 0.0, upX = 0.0, upY = 1.0, upZ = 0.0;
+GLdouble eyeX = 0.0, eyeY = 0.0, eyeZ = 10.0, centerX = 0.0, centerY = 0.0, centerZ = 0.0, upX = 0.0, upY = 1.0, upZ = 0.0;
 GLfloat sudut=0;
 
 BOOL	light;												// Lighting ON / OFF
 BOOL	lp;													// L Pressed?
 BOOL	fp;													// F Pressed?
 
-GLfloat LightAmbient[]= { 0.7f, 0.7f, 0.7f, 1.0f };			// Ambient Light Values ( NEW )
-GLfloat LightDiffuse[]= { 0.4f, 0.4f, 0.4f, 1.0f };			// Diffuse Light Values ( NEW )
+GLfloat LightAmbient[]= { 0.5f, 0.5f, 0.5f, 1.0f };			// Ambient Light Values ( NEW )
+GLfloat LightDiffuse[]= { 0.5f, 0.5f, 0.5f, 1.0f };			// Diffuse Light Values ( NEW )
 GLfloat LightSpecular[]= { 1.0f, 1.0f, 1.0f, 1.0f };		// Diffuse Light Values ( NEW )
-GLfloat LightPosition[]= { 1.0f, 1.0f, 1.0f, 1.0f };		// Light Position ( NEW )
+GLfloat LightPosition[]= { 0.0f, 20.0f, 0.0f, 1.0f };		// Light Position ( NEW )
+
+GLfloat LightAmbient2[]= { 0.2f, 0.2f, 0.2f, 1.0f };			// Ambient Light Values ( NEW )
+GLfloat LightDiffuse2[]= { 0.8f, 0.8f, 0.8f, 1.0f };			// Diffuse Light Values ( NEW )
+GLfloat LightSpecular2[]= { 1.0f, 0.0f, 0.0f, 1.0f };		// Diffuse Light Values ( NEW )
+GLfloat LightPosition2[]= { 1.0f, 100.0f, 5.0f, 1.0f };		// Light Position ( NEW )
 
 GLuint  filter;												// Which Filter To Use
 
@@ -32,15 +37,15 @@ struct Image {
 	char *data;
 };
 typedef struct Image Image;
-unsigned int skybox[6];
-unsigned int texture[2];
+//unsigned int skybox[6];
+unsigned int texture[6];
 enum {
-	SKY_LEFT=0,
-	SKY_BACK,
-	SKY_RIGHT,
-	SKY_FRONT,
-	SKY_TOP,
-	SKY_BOTTOM
+	TEX_BAWAH=0,
+	TEX_ATAS,
+	TEX_ANTENA,
+	TEX_OBSERVATORY,
+	TEX_JARING,
+	TEX_TANAH
 }; 																//constants for the skybox faces, so we don't have to remember so much number
 																//the ids for the textures
 typedef struct
@@ -192,7 +197,11 @@ Image * loadTextureDua(char filename[]) {
 			exit(1);
 		}
 	}else if(filename == "jaring"){
-		if (!ImageLoad("jaring.bmp", image2)) {
+		if (!ImageLoad("jaringc.bmp", image2)) {
+			exit(1);
+		}
+	}else if(filename == "tanah"){
+		if (!ImageLoad("wood.bmp", image2)) {
 			exit(1);
 		}
 	}
@@ -205,101 +214,68 @@ Image * loadTextureDua(char filename[]) {
 //load all of the textures, to the skybox array
 void initskybox(){
 
-	/*
-	skybox[SKY_LEFT]=loadTexture("wood");
-	skybox[SKY_BACK]=loadTexture("water");
-	skybox[SKY_RIGHT]=loadTexture("wood");
-	skybox[SKY_FRONT]=loadTexture("water");
-	skybox[SKY_TOP]=loadTexture("wood");
-	skybox[SKY_BOTTOM]=loadTexture("water");*/
-
 	Image *image1 = loadTextureDua("bawah");
 	Image *image2 = loadTextureDua("antena");
 	Image *image3 = loadTextureDua("atas");
-	//Image *image4 = loadTextureDua("observatory");
+	Image *image4 = loadTextureDua("observatory");
 	Image *image5 = loadTextureDua("jaring");
-	Image *imageFront = loadTextureDua("front");
-	Image *imageBack = loadTextureDua("back");
-	Image *imageTop = loadTextureDua("top");
-	Image *imageBottom = loadTextureDua("bottom");
-	Image *imageLeft = loadTextureDua("left");
-	Image *imageRight = loadTextureDua("right");
+	Image *image6 = loadTextureDua("tanah");
 
 	if (image1 == NULL) {
 		printf("Image was not returned from loadTexture\n");
 		exit(0);
 	}
 
-	glGenTextures(6, skybox);									// Generate Texture
-	glBindTexture(GL_TEXTURE_2D, skybox[SKY_LEFT]);				// binding texture untuk membuat texture 2D
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, imageLeft->sizeX, imageLeft->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, imageLeft->data);
+	glGenTextures(6, texture);
 
-	glBindTexture(GL_TEXTURE_2D, skybox[SKY_RIGHT]);			//binding texture untuk membuat texture 2D
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, imageRight->sizeX, imageRight->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, imageRight->data);
-
-	glBindTexture(GL_TEXTURE_2D, skybox[SKY_BACK]);				// binding texture untuk membuat texture 2D
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, imageBack->sizeX, imageBack->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, imageBack->data);
-
-	glBindTexture(GL_TEXTURE_2D, skybox[SKY_FRONT]);			//binding texture untuk membuat texture 2D
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, imageFront->sizeX, imageFront->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, imageFront->data);
-
-	glBindTexture(GL_TEXTURE_2D, skybox[SKY_TOP]);				// binding texture untuk membuat texture 2D
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, imageTop->sizeX, imageTop->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, imageTop->data);
-
-	glBindTexture(GL_TEXTURE_2D, skybox[SKY_BOTTOM]);			//binding texture untuk membuat texture 2D
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, imageBottom->sizeX, imageBottom->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, imageBottom->data);
-
-	glGenTextures(5, texture);
-
-	glBindTexture(GL_TEXTURE_2D, texture[0]);					//binding texture untuk membuat texture 2D
+	glBindTexture(GL_TEXTURE_2D, texture[TEX_BAWAH]);					//binding texture untuk membuat texture 2D
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
 	glTexImage2D(GL_TEXTURE_2D, 0, 3, image1->sizeX, image1->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image1->data);
 
-	glBindTexture(GL_TEXTURE_2D, texture[1]);					//binding texture untuk membuat texture 2D
+	glBindTexture(GL_TEXTURE_2D, texture[TEX_ANTENA]);					//binding texture untuk membuat texture 2D
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
 	glTexImage2D(GL_TEXTURE_2D, 0, 3, image2->sizeX, image2->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image2->data);
 
-	glBindTexture(GL_TEXTURE_2D, texture[2]);					//binding texture untuk membuat texture 2D
+	glBindTexture(GL_TEXTURE_2D, texture[TEX_ATAS]);					//binding texture untuk membuat texture 2D
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
 	glTexImage2D(GL_TEXTURE_2D, 0, 3, image3->sizeX, image3->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image3->data);
 
-	//glBindTexture(GL_TEXTURE_2D, texture[3]);					//binding texture untuk membuat texture 2D
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
-	//glTexImage2D(GL_TEXTURE_2D, 0, 3, image4->sizeX, image4->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image4->data);
+	glBindTexture(GL_TEXTURE_2D, texture[TEX_OBSERVATORY]);					//binding texture untuk membuat texture 2D
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, image4->sizeX, image4->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image4->data);
 
-	glBindTexture(GL_TEXTURE_2D, texture[4]);					//binding texture untuk membuat texture 2D
+	glBindTexture(GL_TEXTURE_2D, texture[TEX_JARING]);					//binding texture untuk membuat texture 2D
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
 	glTexImage2D(GL_TEXTURE_2D, 0, 3, image5->sizeX, image5->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image5->data);
 
+	glBindTexture(GL_TEXTURE_2D, texture[TEX_TANAH]);					//binding texture untuk membuat texture 2D
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih besar dari texture
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //menyesuaikan ukuran textur ketika image lebih kecil dari texture
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, image6->sizeX, image6->sizeY, 0, GL_RGB, GL_UNSIGNED_BYTE, image6->data);
+
 
 	glLightfv(GL_LIGHT1, GL_AMBIENT, LightAmbient);				// Setup The Ambient Light
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);				// Setup The Diffuse Light
-	glLightfv(GL_LIGHT0, GL_SPECULAR,LightSpecular);			// Setup The Specular Light
+	glLightfv(GL_LIGHT1, GL_SPECULAR,LightSpecular);			// Setup The Specular Light
 	glLightfv(GL_LIGHT1, GL_POSITION,LightPosition);			// Position The Light
 	glEnable(GL_LIGHT1);										// Enable Light One
+
+	glLightfv(GL_LIGHT2, GL_AMBIENT, LightAmbient);				// Setup The Ambient Light
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, LightDiffuse);				// Setup The Diffuse Light
+	glLightfv(GL_LIGHT2, GL_SPECULAR,LightSpecular);			// Setup The Specular Light
+	glLightfv(GL_LIGHT2, GL_POSITION,LightPosition);			// Position The Light
+	//glEnable(GL_LIGHT2);										// Enable Light One
 	glEnable(GL_LIGHTING);
 }
 void killskybox(){												//delete all of the textures from the skybox array (to avoid memory leaks)
 
-	glDeleteTextures(6,&skybox[0]);
-	glDeleteTextures(3,&texture[0]);
+	//glDeleteTextures(6,&skybox[0]);
+	glDeleteTextures(3,&texture[TEX_BAWAH]);
 }
 
 void iconn(){
@@ -323,82 +299,15 @@ void iconn2(){
 
 
 void drawSkybox(float size){
-
-	bool b1=glIsEnabled(GL_TEXTURE_2D);							//new, we left the textures turned on, if it was turned on
-	glDisable(GL_LIGHTING);										//turn off lighting, when making the skybox
-	glDisable(GL_DEPTH_TEST);									//turn off depth texting
-	glEnable(GL_TEXTURE_2D);									//and turn on texturing
-	glBindTexture(GL_TEXTURE_2D,skybox[SKY_BACK]);				//use the texture we want
-	glBegin(GL_QUADS);											//and draw a face
-																//back face
-		glTexCoord2f(0,0);										//use the correct texture coordinate
-		glVertex3f(size/2,size/2,size/2);						//and a vertex
-		glTexCoord2f(1,0);										//and repeat it...
-		glVertex3f(-size/2,size/2,size/2);
-		glTexCoord2f(1,1);
-		glVertex3f(-size/2,-size/2,size/2);
-		glTexCoord2f(0,1);
-		glVertex3f(size/2,-size/2,size/2);
-	glEnd();
-	glBindTexture(GL_TEXTURE_2D,skybox[SKY_LEFT]);
-	glBegin(GL_QUADS);											//left face
-		glTexCoord2f(0,0);
-		glVertex3f(-size/2,size/2,size/2);
-		glTexCoord2f(1,0);
-		glVertex3f(-size/2,size/2,-size/2);
-		glTexCoord2f(1,1);
-		glVertex3f(-size/2,-size/2,-size/2);
-		glTexCoord2f(0,1);
-		glVertex3f(-size/2,-size/2,size/2);
-	glEnd();
-	glBindTexture(GL_TEXTURE_2D,skybox[SKY_FRONT]);
-	glBegin(GL_QUADS);											//front face
-		glTexCoord2f(1,0);
-		glVertex3f(size/2,size/2,-size/2);
-		glTexCoord2f(0,0);
-		glVertex3f(-size/2,size/2,-size/2);
-		glTexCoord2f(0,1);
-		glVertex3f(-size/2,-size/2,-size/2);
-		glTexCoord2f(1,1);
-		glVertex3f(size/2,-size/2,-size/2);
-	glEnd();
-	glBindTexture(GL_TEXTURE_2D,skybox[SKY_RIGHT]);
-	glBegin(GL_QUADS);											//right face
-		glTexCoord2f(0,0);
-		glVertex3f(size/2,size/2,-size/2);
-		glTexCoord2f(1,0);
-		glVertex3f(size/2,size/2,size/2);
-		glTexCoord2f(1,1);
-		glVertex3f(size/2,-size/2,size/2);
-		glTexCoord2f(0,1);
-		glVertex3f(size/2,-size/2,-size/2);
-	glEnd();
-	glBindTexture(GL_TEXTURE_2D,skybox[SKY_TOP]);
-	glBegin(GL_QUADS);											//top face
-		glTexCoord2f(1,0);
-		glVertex3f(size/2,size/2,size/2);
-		glTexCoord2f(0,0);
-		glVertex3f(-size/2,size/2,size/2);
-		glTexCoord2f(0,1);
-		glVertex3f(-size/2,size/2,-size/2);
-		glTexCoord2f(1,1);
-		glVertex3f(size/2,size/2,-size/2);
-	glEnd();
-	glBindTexture(GL_TEXTURE_2D,skybox[SKY_BOTTOM]);
-	glBegin(GL_QUADS);											//bottom face
-		glTexCoord2f(1,1);
-		glVertex3f(size/2,-size/2,size/2);
-		glTexCoord2f(0,1);
-		glVertex3f(-size/2,-size/2,size/2);
-		glTexCoord2f(0,0);
-		glVertex3f(-size/2,-size/2,-size/2);
-		glTexCoord2f(1,0);
-		glVertex3f(size/2,-size/2,-size/2);
-	glEnd();
-	glEnable(GL_LIGHTING);										//turn everything back, which we turned on, and turn everything off, which we have turned on.
-	glEnable(GL_DEPTH_TEST);
-	if(!b1)
-		glDisable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+			glPushMatrix();
+			glRotatef(270, 1.0, 0.0, 0.0);
+			glBindTexture(GL_TEXTURE_2D,texture[TEX_OBSERVATORY]);
+			gluSphere(quadObj, size, 30, 30);
+			glPopMatrix();
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_LIGHTING);
 }
 
 
@@ -425,7 +334,7 @@ void plazaBawah(){
 		glPushMatrix();
 		glTranslatef(0, 0, 0);
 		glRotatef(90, 1, 0, 0);
-		glBindTexture(GL_TEXTURE_2D,texture[0]);
+		glBindTexture(GL_TEXTURE_2D,texture[TEX_BAWAH]);
 		gluCylinder(quadObj, 5, 5, 2.75, 50, 1);
 		glPopMatrix();
 
@@ -478,7 +387,7 @@ void badanMenara(){
 		glPushMatrix();
 		glTranslatef(0, 6, 0);
 		glRotatef(270, 1, 0, 0);
-		glBindTexture(GL_TEXTURE_2D,texture[4]);
+		glBindTexture(GL_TEXTURE_2D,texture[TEX_JARING]);
 		gluCylinder(quadObj, 4, 2, 0.05, 50, 1);
 		glPopMatrix();
 
@@ -515,7 +424,7 @@ void tempatRestoran(){
 		glPushMatrix();
 		glTranslatef(0, 34, 0);
 		glRotatef(90, 1, 0, 0);
-		glBindTexture(GL_TEXTURE_2D,texture[2]);
+		glBindTexture(GL_TEXTURE_2D,texture[TEX_ATAS]);
 		gluCylinder(quadObj, 5, 5, 4, 50, 1);
 		glPopMatrix();
 
@@ -551,7 +460,7 @@ void antenaMenara(){
 	//glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 
-		glBindTexture(GL_TEXTURE_2D,texture[1]);
+		glBindTexture(GL_TEXTURE_2D,texture[TEX_ANTENA]);
 		glPushMatrix();
 		glTranslatef(0, 40, 0);
 		glRotatef(270, 1, 0, 0);
@@ -612,30 +521,25 @@ void display(void){												// Tempat "menggambar"
 	//buat objek 3D disini
 	glPushMatrix();
 	glRotatef(sudut, 0.0, 1.0, 0.0);
-	//drawSkybox(50.0);
+	drawSkybox(70.0);
 
 	glPushMatrix();
 	glTranslatef(0, -1.1, 0);
-	glBegin(GL_LINES);
-	for(GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
-		glVertex3f(x, -0.55f, 20.0f);
-		glVertex3f(x, -0.55f, -20.0f);
 
-		glVertex3f(20.0f, -0.55f, x);
-		glVertex3f(-20.0f, -0.55f, x);
-	}
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D,texture[TEX_TANAH]);
+	glBegin(GL_QUADS);
+	glTexCoord2f(1,1);
+	glVertex3f(-20.0f, -0.41f, 20.0f);
+	glTexCoord2f(0,1);
+	glVertex3f(20.0f, -0.41f, 20.0f);
+	glTexCoord2f(0,0);
+	glVertex3f(20.0f, -0.41f, -20.0f);
+	glTexCoord2f(1,0);
+	glVertex3f(-20.0f, -0.41f, -20.0f);
 	glEnd();
 	glPopMatrix();
-
-	/*glDisable(GL_LIGHTING);
-	glEnable(GL_TEXTURE_2D);
-		glPushMatrix();
-		glRotatef(270, 1.0, 0.0, 0.0);
-		glBindTexture(GL_TEXTURE_2D,texture[3]);
-		gluSphere(quadObj, 70.0, 30, 30);
-		glPopMatrix();
 	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_LIGHTING);*/
 
 
 	//glTranslatef(0, (GLfloat)geser-3, 0);
@@ -751,14 +655,19 @@ void specialKeyboard(int key, int x, int y){
 			glutPostRedisplay();
 			break;
 		case GLUT_KEY_UP:
+			if(eyeY == -1){
+				centerY = 0;
+			}
 			if(eyeY<20){
-				eyeY = eyeY + 1;
+				eyeY = eyeY + 0.25;
 			}
 			glutPostRedisplay();
 			break;
 		case GLUT_KEY_DOWN:
-			if(eyeY>-20){
-				eyeY = eyeY - 1;
+			if(eyeY>-1){
+				eyeY = eyeY - 0.25;
+			}else if(centerY<20){
+				centerY = centerY + 0.25;
 			}
 			glutPostRedisplay();
 			break;
